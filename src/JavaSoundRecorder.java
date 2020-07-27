@@ -1,7 +1,13 @@
+import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.DbxClientV2;
+import com.dropbox.core.v2.files.FileMetadata;
+import com.dropbox.core.v2.files.UploadErrorException;
 
 import javax.sound.sampled.*;
+import javax.xml.crypto.Data;
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class JavaSoundRecorder
 {
@@ -9,6 +15,12 @@ public class JavaSoundRecorder
     private TargetDataLine line;
     private DataLine.Info info;
     private AudioFormat format;
+
+    Date date = new Date();
+    SimpleDateFormat dataFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+    private String path;
+    private String fileName;
+    File wavFile;
 
     private DbxClientV2 client;
 
@@ -18,6 +30,9 @@ public class JavaSoundRecorder
         fileType = AudioFileFormat.Type.WAVE;
         format = getAudioFormat();
         info = new DataLine.Info(TargetDataLine.class, format);
+        fileName = dataFormat.format(date);
+        path = folder + fileName + ".wav";
+        wavFile = new File(path);
     }
 
     /**
@@ -29,23 +44,18 @@ public class JavaSoundRecorder
         int channels = 2;
         boolean signed = true;
         boolean bigEndian = true;
-        AudioFormat format = new AudioFormat(sampleRate, sampleSizeInBits,
+        return new AudioFormat(sampleRate, sampleSizeInBits,
                 channels, signed, bigEndian);
-        return format;
     }
 
     public void recordAudio(int milliseconds)
     {
-        //TODO: using SimpleDateFormat create name
-        // in format: 20200724_201906.wav
-        String fileName = "";
-        start(fileName);
+        start(path);
         finish(milliseconds);
     }
 
     private void start(String fileName)
     {
-        File wavFile = new File(fileName);
         Thread thread = new Thread(() -> {
             try {
                 line = (TargetDataLine) AudioSystem.getLine(info);
@@ -70,9 +80,31 @@ public class JavaSoundRecorder
             }
             line.stop();
             line.close();
+            uploadFileInDbx();
             //TODO: upload file to Dropbox
             //  and then remove the file from disk
         });
         thread.start();
+       try{
+            thread.join();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        delete();
+    }
+
+    private void delete() {
+        if(wavFile.delete()){
+            System.out.println("File deleted!");
+        }
+    }
+
+    private void uploadFileInDbx() {
+        try (InputStream in = new FileInputStream(path)) {
+            client.files().uploadBuilder("/" + fileName + ".wav").uploadAndFinish(in);
+            if(in != null) in.close();
+        } catch (IOException | DbxException e) {
+            e.printStackTrace();
+        }
     }
 }
