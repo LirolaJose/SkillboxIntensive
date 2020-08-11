@@ -23,12 +23,4 @@ public class Main
             }
         }
     }
-
-//        try {
-//            InputStream in = new FileInputStream("/Users/sortedmap/Desktop/Java.jpg");
-//            client.files().uploadBuilder("/picture.jpg")
-//                    .uploadAndFinish(in);
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//        }
-    }
+}
