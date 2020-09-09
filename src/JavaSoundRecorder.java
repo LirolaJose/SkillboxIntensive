@@ -7,6 +7,8 @@ import javax.sound.sampled.*;
 import javax.xml.crypto.Data;
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class JavaSoundRecorder
@@ -16,8 +18,7 @@ public class JavaSoundRecorder
     private DataLine.Info info;
     private AudioFormat format;
 
-    Date date = new Date();
-    SimpleDateFormat dataFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+    LocalDateTime now = LocalDateTime.now();
     private String path;
     private String fileName;
     File wavFile;
@@ -30,7 +31,7 @@ public class JavaSoundRecorder
         fileType = AudioFileFormat.Type.WAVE;
         format = getAudioFormat();
         info = new DataLine.Info(TargetDataLine.class, format);
-        fileName = dataFormat.format(date);
+        fileName = now.format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         path = folder + fileName + ".wav";
         wavFile = new File(path);
     }
